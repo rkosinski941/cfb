@@ -1,0 +1,354 @@
+:root {
+  color-scheme: dark;
+  --bg: #0b3d2e;
+  --bg2: #0f4f3b;
+  --panel: #123f31;
+  --ink: #f5f0e6;
+  --muted: #b7cfc4;
+  --accent: #e8c547;
+  --danger: #ff6b6b;
+  --ok: #6bcf8e;
+  --card: #f8f5ee;
+  --red: #c0392b;
+  --black: #1a1a1a;
+  --radius: 14px;
+  --tap: 48px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  min-height: 100%;
+  background: radial-gradient(circle at top, #145c45, var(--bg) 55%);
+  color: var(--ink);
+}
+
+body {
+  overscroll-behavior: none;
+}
+
+.app {
+  min-height: 100dvh;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right)
+    env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+.safe {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 12px 14px 28px;
+}
+
+h1 {
+  margin: 8px 0 4px;
+  font-size: 2.4rem;
+  letter-spacing: 0.08em;
+  text-align: center;
+}
+
+h2,
+h3 {
+  margin: 0 0 10px;
+}
+
+.tagline,
+.muted {
+  color: var(--muted);
+  text-align: center;
+}
+
+.small {
+  font-size: 0.85rem;
+}
+
+.panel {
+  background: color-mix(in srgb, var(--panel) 88%, black);
+  border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin: 12px 0;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 10px 0;
+  font-size: 0.95rem;
+}
+
+input {
+  min-height: var(--tap);
+  border-radius: 12px;
+  border: 1px solid #2f6b55;
+  background: #0a2f24;
+  color: var(--ink);
+  padding: 10px 12px;
+  font-size: 1.05rem;
+}
+
+.btn {
+  min-height: var(--tap);
+  border: none;
+  border-radius: 12px;
+  padding: 10px 16px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn.primary {
+  width: 100%;
+  background: var(--accent);
+  color: #1a1405;
+}
+
+.btn.secondary {
+  background: #1d5a45;
+  color: var(--ink);
+}
+
+.btn.bid {
+  min-width: var(--tap);
+  background: #1d5a45;
+  color: var(--ink);
+}
+
+.btn.linkish {
+  background: transparent;
+  color: var(--muted);
+  width: 100%;
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.conn {
+  text-align: center;
+  font-size: 0.85rem;
+  margin-bottom: 8px;
+}
+.conn.on {
+  color: var(--ok);
+}
+.conn.off {
+  color: var(--danger);
+}
+
+.player-list {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0;
+}
+.player-list li {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #0a2f24;
+  margin-bottom: 6px;
+}
+.player-list li.offline {
+  opacity: 0.55;
+}
+
+.status {
+  text-align: center;
+  color: var(--accent);
+}
+
+.toast {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  margin-bottom: 10px;
+}
+.toast.error {
+  background: #5a1d1d;
+  border: 1px solid var(--danger);
+}
+.toast button {
+  background: transparent;
+  border: none;
+  color: var(--ink);
+  font-size: 1.4rem;
+  min-width: 36px;
+  min-height: 36px;
+}
+
+.game-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.trump-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: #0a2f24;
+  border-radius: 12px;
+  padding: 6px 8px;
+  border: 1px solid var(--accent);
+}
+.trump-badge .label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: var(--accent);
+  letter-spacing: 0.06em;
+}
+
+.scoreboard {
+  background: #0a2f24;
+  border-radius: var(--radius);
+  padding: 10px;
+  margin-bottom: 12px;
+  overflow-x: auto;
+}
+.scoreboard table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+.scoreboard th,
+.scoreboard td {
+  text-align: left;
+  padding: 6px 4px;
+}
+.scoreboard tr.current td {
+  color: var(--accent);
+}
+.scoreboard tr.you td {
+  font-weight: 700;
+}
+
+.trick {
+  margin-bottom: 12px;
+}
+.trick-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 72px;
+  align-items: flex-end;
+}
+.trick-play {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.bid-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.hand-cards {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 8px 2px 12px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.card {
+  flex: 0 0 auto;
+  width: 58px;
+  height: 84px;
+  border-radius: 10px;
+  border: 2px solid #ccc;
+  background: var(--card);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 0;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+}
+.card.compact {
+  width: 46px;
+  height: 66px;
+}
+.card.red {
+  color: var(--red);
+}
+.card.black {
+  color: var(--black);
+}
+.card-rank {
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1;
+}
+.card-suit {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+.card.clickable:not(:disabled) {
+  transform: translateY(-4px);
+  border-color: var(--accent);
+}
+.card.dimmed {
+  opacity: 0.35;
+  filter: grayscale(0.4);
+}
+.card.disabled:not(.clickable) {
+  cursor: default;
+}
+.card.selected {
+  outline: 2px solid var(--accent);
+}
+
+.hand-result ul,
+.rules ul {
+  padding-left: 18px;
+}
+.pos {
+  color: var(--ok);
+}
+.neg {
+  color: var(--danger);
+}
+
+.rules {
+  margin-top: 16px;
+  color: var(--muted);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+@media (min-width: 400px) {
+  .card {
+    width: 64px;
+    height: 92px;
+  }
+}
