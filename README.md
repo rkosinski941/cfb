@@ -27,7 +27,7 @@ packages/client — mobile portrait UI
 
 ## Local development
 
-Requires Node 18+.
+Requires Node 22.12+ (the dev and test tools need it; the server itself runs on 18+).
 
 ```
 cd cfb
