@@ -35,8 +35,20 @@ export function createDeck(): Card[] {
   return deck;
 }
 
+/**
+ * Uniform random float in [0, 1) from the platform CSPRNG (Web Crypto,
+ * available in browsers and Node 18+). Math.random is not suitable for
+ * dealing cards: its internal state can be recovered from observed output.
+ */
+export function secureRandom(): number {
+  const buf = new Uint32Array(2);
+  globalThis.crypto.getRandomValues(buf);
+  // 53 random bits -> [0, 1)
+  return (buf[0]! * 2 ** 21 + (buf[1]! >>> 11)) / 2 ** 53;
+}
+
 /** Fisher–Yates shuffle (mutates and returns). */
-export function shuffle<T>(items: T[], rng: () => number = Math.random): T[] {
+export function shuffle<T>(items: T[], rng: () => number = secureRandom): T[] {
   for (let i = items.length - 1; i > 0; i--) {
     const j = Math.floor(rng() * (i + 1));
     [items[i], items[j]] = [items[j], items[i]];

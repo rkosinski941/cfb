@@ -1,3 +1,4 @@
+import { timingSafeEqual } from 'node:crypto';
 import { customAlphabet } from 'nanoid';
 import {
   MAX_PLAYERS,
@@ -21,6 +22,7 @@ import {
   type Suit,
   type TrickPlay,
 } from '@cfb/shared';
+import { cleanName } from './validation.js';
 
 const codeAlphabet = customAlphabet('ABCDEFGHJKLMNPQRSTUVWXYZ23456789', 5);
 const tokenAlphabet = customAlphabet(
@@ -41,6 +43,12 @@ interface InternalPlayer {
   isHost: boolean;
 }
 
+function tokensEqual(a: string, b: string): boolean {
+  const ab = Buffer.from(a);
+  const bb = Buffer.from(b);
+  return ab.length === bb.length && timingSafeEqual(ab, bb);
+}
+
 export class GameRoom {
   readonly code: string;
   private players: InternalPlayer[] = [];
@@ -58,13 +66,40 @@ export class GameRoom {
   private winners: string[] = [];
   private message: string | null = null;
   private bidIndex = 0;
+  /** Last time anything happened in this room (ms since epoch). */
+  lastActivity = Date.now();
 
   constructor(code?: string) {
     this.code = code ?? codeAlphabet();
   }
 
-  static create(): GameRoom {
-    return new GameRoom();
+  /**
+   * Create a room with a code that is not already in use. Without the
+   * check a random collision would silently replace a live room.
+   */
+  static create(isTaken: (code: string) => boolean = () => false): GameRoom {
+    for (let i = 0; i < 50; i++) {
+      const code = codeAlphabet();
+      if (!isTaken(code)) return new GameRoom(code);
+    }
+    throw new Error('Server busy — try again');
+  }
+
+  private touch(): void {
+    this.lastActivity = Date.now();
+  }
+
+  get connectedCount(): number {
+    return this.players.filter((p) => p.connected).length;
+  }
+
+  /**
+   * A room can be removed once nobody is connected and it has been idle
+   * for `idleMs`, or once the game is over and idle for `idleMs`.
+   */
+  isAbandoned(now: number, idleMs: number): boolean {
+    if (now - this.lastActivity < idleMs) return false;
+    return this.connectedCount === 0 || this.phase === 'game_over';
   }
 
   get playerCount(): number {
@@ -72,8 +107,7 @@ export class GameRoom {
   }
 
   addPlayer(name: string, socketId: string): { playerId: string; token: string } {
-    const trimmed = name.trim().slice(0, 20);
-    if (!trimmed) throw new Error('Name is required');
+    const trimmed = cleanName(name);
     if (this.phase !== 'lobby') throw new Error('Game already started');
     if (this.players.length >= MAX_PLAYERS) throw new Error('Room is full (max 7)');
     if (this.players.some((p) => p.name.toLowerCase() === trimmed.toLowerCase())) {
@@ -93,34 +127,35 @@ export class GameRoom {
       isHost: this.players.length === 0,
     };
     this.players.push(player);
+    this.touch();
     this.message = `${player.name} joined`;
     return { playerId: player.id, token: player.token };
   }
 
   /**
-   * Rejoin with room code + name and/or token.
-   * Prefer token; fall back to exact name match.
+   * Rejoin an existing seat. The secret session token is the only proof
+   * of identity — a name alone is public and must never be enough.
+   * Returns the socket id previously bound to the seat (if any) so the
+   * caller can detach it.
    */
   rejoin(
-    name: string,
-    token: string | undefined,
+    token: string,
     socketId: string,
-  ): { playerId: string; token: string } {
-    let player: InternalPlayer | undefined;
-    if (token) {
-      player = this.players.find((p) => p.token === token);
-    }
-    if (!player && name.trim()) {
-      player = this.players.find(
-        (p) => p.name.toLowerCase() === name.trim().toLowerCase(),
-      );
-    }
-    if (!player) throw new Error('Player not found — check room code, name, or token');
+  ): { playerId: string; token: string; previousSocketId: string | null } {
+    const player = token ? this.players.find((p) => tokensEqual(p.token, token)) : undefined;
+    if (!player) throw new Error('Session not found — join with a new name');
 
+    const previousSocketId = player.socketId !== socketId ? player.socketId : null;
     player.socketId = socketId;
     player.connected = true;
+    this.touch();
     this.message = `${player.name} reconnected`;
-    return { playerId: player.id, token: player.token };
+    return { playerId: player.id, token: player.token, previousSocketId };
+  }
+
+  /** Player id owning this token, or null. Does not change any state. */
+  seatForToken(token: string): string | null {
+    return this.players.find((p) => tokensEqual(p.token, token))?.id ?? null;
   }
 
   disconnect(socketId: string): void {
@@ -128,6 +163,7 @@ export class GameRoom {
     if (!p) return;
     p.connected = false;
     p.socketId = null;
+    this.touch();
     this.message = `${p.name} disconnected`;
   }
 
@@ -144,6 +180,7 @@ export class GameRoom {
 
     this.dealerIndex = 0;
     this.handNumber = 0;
+    this.touch();
     this.beginNextHand();
   }
 
@@ -228,6 +265,7 @@ export class GameRoom {
 
     const player = this.players.find((p) => p.id === playerId)!;
     player.bid = amount;
+    this.touch();
     this.bidIndex += 1;
 
     if (this.bidIndex >= this.players.length) {
@@ -257,6 +295,7 @@ export class GameRoom {
     const cardIndex = player.hand.findIndex((c) => c.id === cardId);
     const card = player.hand[cardIndex]!;
     player.hand.splice(cardIndex, 1);
+    this.touch();
 
     if (this.currentTrick.length === 0) {
       this.leadSuit = card.suit;
@@ -317,6 +356,7 @@ export class GameRoom {
       throw new Error('Not in room');
     }
     this.dealerIndex = nextDealerIndex(this.dealerIndex, this.players.length);
+    this.touch();
     this.beginNextHand();
   }
 

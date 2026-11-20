@@ -72,6 +72,17 @@ Share ?room=CODE or the 5-character room code.
 ## Rejoin
 
 localStorage keeps room code, name, and token for refresh reconnect.
+Reclaiming a seat requires that token; a name alone is never enough.
+If a seat is reclaimed from another device, the old connection is cut off.
+
+## Server settings (environment)
+
+- `ALLOWED_ORIGINS` — comma-separated extra browser origins allowed to
+  connect. The server's own origin is always allowed; others are refused.
+- `TRUST_PROXY=1` — set when behind a hosting proxy (Railway/Render/Fly) so
+  per-client rate limits use the real client IP.
+- `MAX_ROOMS` — cap on live rooms (default 500). Idle rooms with nobody
+  connected, or finished games, are removed after 30 minutes.
 
 ## License
 
